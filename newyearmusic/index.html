@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+        #playButton {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 10;
+        }
+        #image1 {
+            position: absolute;
+            top: 375px;
+            right: 100px;
+            z-index: 10;
+            animation: dance 1s infinite;
+        }
+        #image2 {
+            position: absolute;
+            top: 300px;
+            right: 900px;
+            z-index: 10;
+            animation: dance 1s infinite;
+        }
+        @keyframes dance{
+            0%{transform: rotate(0deg);}
+            25%{transform: rotate(10deg);}
+            50%{transform: rotate(0deg);}
+            75%{transform: rotate(-10deg);}
+            100%{transform: rotate(0deg);}
+        }
+    </style>
+</head>
+<body>
+    <img id="image1" src="https://th.bing.com/th/id/OIP.yBuGFk1cQGdMgMEjL5f-EQAAAA?rs=1&pid=ImgDetMain" width="300">
+    <img id="image2" src="https://static.vecteezy.com/system/resources/previews/017/060/412/original/lantern-for-chinese-new-year-decoration-traditional-icon-symbols-png.png" width="300">
+    <audio src="music.m4a" id="myAudio" loop></audio>
+<script>
+    var audio = document.getElementById("myAudio");
+
+    let images = [];
+    let confetti = [];
+    let saplingImage, seedImage;
+    let img;
+    let x, y, speed, gameOver, isSeed, score;
+    let startScreen = true;
+
+    function preload() {
+        images.push(loadImage("https://th.bing.com/th/id/OIP.B1sUbGQ3kkBvGzA29FAyNgHaHa?rs=1&pid=ImgDetMain"));
+        images.push(loadImage("https://png.pngtree.com/png-vector/20231125/ourmid/pngtree-year-of-the-dragon-red-packet-spring-festival-red-packet-three-vector-png-image_10703113.png"));
+        images.push(loadImage("https://static.vecteezy.com/system/resources/previews/017/060/412/original/lantern-for-chinese-new-year-decoration-traditional-icon-symbols-png.png"));
+        saplingImage = loadImage("https://thumbs.dreamstime.com/b/chinese-new-year-snake-27394315.jpg");
+        seedImage = loadImage("https://png.pngtree.com/png-vector/20231125/ourmid/pngtree-year-of-the-dragon-red-packet-spring-festival-red-packet-three-vector-png-image_10703113.png");
+    }
+
+    function setup() {
+        createCanvas(windowWidth, windowHeight);
+        for (let i = 0; i < 50; i++) {
+            confetti.push(new Confetti());
+        }
+        x = 0;
+        y = 100;
+        speed = 2;
+        gameOver = false;
+        score = 0;
+    }
+
+    function draw() {
+        background(255);
+        textSize(40);
+        fill(0);
+        text("Chinese New Year 2024", width / 2, 50);
+        if (startScreen) {
+            // Display start screen with instructions
+            fill(0);
+            textSize(30);
+            textAlign(CENTER);
+            text("Chinese New Year 2024", width / 2, height / 2);
+            textSize(20);
+            text("Chinese New Year is a celebration involving the color red \nClick the red packets but avoid the snakes.\nClick to start!", width / 2, height / 2 + 40);
+            image(seedImage, width / 2 - 75, 150, 150, 150);
+        } else if (!gameOver) {
+            // Main game logic
+            if (img) {
+                image(img, x, y, 100, 100); // Draw the image at the current x position
+                x += speed; // Update the x position to move the image to the right
+
+                if (x > width) {
+                    if (isSeed) {
+                        gameOver = true; // End the game if it's a seed
+                    } else {
+                        x = -100; // Reset to start from the left again
+                        selectRandomImage(); // Select a new random image
+                        speed += 0.5; // Increase the speed
+                    }
+                }
+            }
+
+            // Display the score
+            fill(0);
+            textSize(20);
+            text("Score: " + score, 50, 30);
+        } else {
+            // Display game over message
+            fill(0);
+            textSize(30);
+            textAlign(CENTER);
+            text("Happy New Year!", width / 2, height / 2);
+            textSize(20);
+            text("Score: " + score, width / 2, height / 2 + 40);
+
+            // Draw confetti
+            for (let i = 0; i < confetti.length; i++) {
+                confetti[i].update();
+                confetti[i].display();
+            }
+        }
+    }
+
+    class Confetti {
+        constructor() {
+            this.img = random(images);
+            this.x = random(width);
+            this.y = random(-height, 0);
+            this.speed = random(1, 5);
+            this.size = random(20, 50);
+        }
+
+        update() {
+            this.y += this.speed;
+            if (this.y > height) {
+                this.y = random(-height, 0);
+                this.x = random(width);
+            }
+        }
+
+        display() {
+            image(this.img, this.x, this.y, this.size, this.size);
+        }
+    }
+
+    function startGame() {
+        x = 0; // Reset x position
+        y = 100; // Y position for the image
+        speed = 2; // Reset speed
+        gameOver = false; // Reset game over state
+        score = 0; // Reset score
+        selectRandomImage(); // Select a random image
+        startScreen = false; // Exit the start screen
+    }
+
+    function selectRandomImage() {
+        let randomNumber = floor(random(0, 2)); // Generates 0 or 1
+        if (randomNumber === 1) {
+            img = saplingImage;
+            isSeed = false; // It's a sapling
+        } else {
+            img = seedImage;
+            isSeed = true; // It's a seed
+        }
+    }
+
+    function mousePressed() {
+        if (startScreen) {
+            audio.play();
+            startGame(); // Start the game when clicking on the start screen
+        } else if (!gameOver && img) {
+            if (mouseX >= x && mouseX <= x + 100 && mouseY >= y && mouseY <= y + 100) {
+                if (isSeed) {
+                    x = -100; // Reset to start from the left again
+                    score++; // Increase the score
+                    selectRandomImage(); // Select a new random image
+                    speed += 0.5; // Increase the speed
+                } else {
+                    gameOver = true; // End the game if it's a sapling
+                }
+            }
+        }
+    }
+
+    function windowResized() {
+        resizeCanvas(windowWidth, windowHeight);
+    }
+</script>
+</body>
+</html>
